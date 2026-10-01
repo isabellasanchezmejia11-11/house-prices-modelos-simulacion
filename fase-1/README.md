@@ -73,17 +73,24 @@ simplemente estimar el precio promedio.
 
 1. Clonar el repositorio:
    ```bash
-   https://github.com/isabellasanchezmejia11-11/house-prices-modelos-simulacion.git
+   git clone https://github.com/isabellasanchezmejia11-11/house-prices-modelos-simulacion.git
    ```
 2. Descargar `train.csv` desde la competición de Kaggle
    (House Prices – Advanced Regression Techniques) y ubicarlo dentro de
    la carpeta `fase-1/`.
-3. Instalar las dependencias necesarias:
+3. Instalar las dependencias con las versiones exactas utilizadas:
    ```bash
-   pip install pandas numpy matplotlib seaborn scikit-learn joblib
+   pip install pandas==3.0.5 numpy==2.4.6 scikit-learn==1.9.0 joblib==1.6.0
    ```
 4. Abrir `fase-1/notebook.ipynb` y ejecutar todas las celdas en orden
    (Kernel → Restart & Run All).
 5. Al finalizar, el modelo entrenado quedará guardado en
    `fase-1/modelo.joblib`, listo para cargarse y generar nuevas
    predicciones sin necesidad de reentrenar.
+
+## Dependencias (versiones exactas)
+
+- pandas==3.0.5
+- numpy==2.4.6
+- scikit-learn==1.9.0
+- joblib==1.6.0
