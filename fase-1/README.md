@@ -39,10 +39,19 @@ documentada que sirva como base para las siguientes fases del proyecto
 
 Regresión Lineal (`LinearRegression` de scikit-learn), integrada dentro
 de un `Pipeline` que combina:
+- Transformaciones semánticas reproducibles para representar las categorías
+  de ausencia, crear `HasGarage` y preparar `GarageYrBlt`.
 - Imputación de valores faltantes (mediana para numéricas, categoría más
   frecuente para categóricas).
 - Codificación One-Hot para variables categóricas.
 - Escalamiento estándar para variables numéricas.
+
+Los ocho valores faltantes de `MasVnrType` y `MasVnrArea` se conservan como
+desconocidos; no se asume que indiquen ausencia de mampostería. La categoría
+desconocida se imputa con la moda y el área con la mediana aprendidas por el
+pipeline únicamente durante el ajuste sobre entrenamiento. `HasGarage` y las
+reglas semánticas se aplican dentro del mismo pipeline, también al predecir
+registros nuevos.
 
 Se comparó contra un modelo base (`DummyRegressor`, estrategia `mean`)
 como punto de referencia.
@@ -52,6 +61,18 @@ como punto de referencia.
 Se utilizaron tres métricas de evaluación para problemas de regresión:
 **MAE**, **RMSE** y **R²**, calculadas sobre el conjunto de prueba (20%
 de los datos, separados con `random_state` fijo para reproducibilidad).
+La partición se realiza antes del ajuste del pipeline; imputación,
+escalamiento y codificación se aprenden únicamente con el conjunto de
+entrenamiento. Tras reportar las métricas del holdout, el artefacto final se
+reentrena con todos los datos disponibles para su uso posterior.
+
+## Momento de predicción y variables disponibles
+
+La predicción se define al cierre/registro de una venta, no antes de que ocurra.
+En ese momento deben estar disponibles `YrSold`, `MoSold`, `SaleType` y
+`SaleCondition`, que se usan como variables predictoras. Si el objetivo cambia
+a estimar un precio antes de la venta, estas variables deben excluirse y el
+modelo debe evaluarse de nuevo bajo ese escenario.
 
 ## Principales resultados
 
@@ -82,11 +103,19 @@ simplemente estimar el precio promedio.
    ```bash
    pip install pandas==3.0.5 numpy==2.4.6 scikit-learn==1.9.0 joblib==1.6.0
    ```
+   El notebook también utiliza `matplotlib` y `seaborn` para las gráficas:
+   ```bash
+   pip install matplotlib seaborn
+   ```
 4. Abrir `fase-1/notebook.ipynb` y ejecutar todas las celdas en orden
    (Kernel → Restart & Run All).
 5. Al finalizar, el modelo entrenado quedará guardado en
    `fase-1/modelo.joblib`, listo para cargarse y generar nuevas
    predicciones sin necesidad de reentrenar.
+
+El notebook se debe ejecutar desde la raíz del repositorio o desde `fase-1/`.
+Utiliza el preprocesador semántico compartido ubicado en `fase-2/house_prices/`;
+por ello, se conserva `fase-2` junto al notebook al clonar el repositorio.
 
 ## Dependencias (versiones exactas)
 
@@ -94,3 +123,8 @@ simplemente estimar el precio promedio.
 - numpy==2.4.6
 - scikit-learn==1.9.0
 - joblib==1.6.0
+
+## Dependencias adicionales para las gráficas del notebook:
+
+- matplotlib
+- seaborn
