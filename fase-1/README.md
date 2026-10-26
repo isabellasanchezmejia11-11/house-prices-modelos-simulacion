@@ -54,8 +54,7 @@ conjunto de entrenamiento filtrado.
 
 Como análisis del momento de predicción, el notebook también compara un
 pipeline que usa `SaleType` y `SaleCondition` con el modelo principal que las
-excluye. Con esas variables la evaluación obtiene MAE = $21,355.53,
-RMSE = $65,779.88 y R² = 0.4359; sin ellas obtiene MAE = $21,182.45,
+excluye. Sin esas variables la evaluación obtiene MAE = $21,182.45,
 RMSE = $64,975.84 y R² = 0.4496. Además de la mejora observada, excluirlas
 evita depender de información que no está disponible antes de concretar la
 venta.
