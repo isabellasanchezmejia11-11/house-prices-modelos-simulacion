@@ -32,8 +32,7 @@ Conserva la ruta impresa para identificar el modelo que usarás.
 Para predecir con registros sin la variable objetivo:
 
 El repositorio incluye `fase-1/test.csv`, descargado de la competición de
-Kaggle. También puedes proporcionar otro CSV con las variables predictoras
-originales, sin `SalePrice`.
+Kaggle. 
 
 ```powershell
 python fase-2/predict.py `
