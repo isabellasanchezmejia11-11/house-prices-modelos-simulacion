@@ -72,7 +72,7 @@ def train_model(
     test_size: float = 0.2,
     random_state: int = 42,
 ) -> tuple[Path, dict[str, float]]:
-    """Evalúa un split holdout y guarda un pipeline final ajustado con todos los datos."""
+    """Evalúa un split holdout y guarda el pipeline ajustado solo con train."""
     if "SalePrice" not in data.columns:
         raise ValueError("El CSV de entrenamiento debe incluir la columna 'SalePrice'.")
     if len(data) < 2:
@@ -89,6 +89,21 @@ def train_model(
         test_size=test_size,
         random_state=random_state,
     )
+    required_outlier_columns = {"Id", "SaleCondition", "GrLivArea"}
+    missing_outlier_columns = required_outlier_columns - set(X_train.columns)
+    if missing_outlier_columns:
+        raise ValueError(
+            "El CSV debe incluir las columnas requeridas para tratar los "
+            f"outliers documentados: {sorted(missing_outlier_columns)}."
+        )
+    outlier_mask = (
+        X_train["Id"].isin([524, 1299])
+        & X_train["SaleCondition"].eq("Partial")
+        & pd.to_numeric(X_train["GrLivArea"], errors="coerce").gt(4000)
+    )
+    X_train = X_train.loc[~outlier_mask].copy()
+    y_train = y_train.loc[~outlier_mask]
+
     evaluation_model = build_model()
     evaluation_model.fit(X_train, y_train)
     predictions = evaluation_model.predict(X_test)
@@ -98,11 +113,8 @@ def train_model(
         "r2": float(r2_score(y_test, predictions)),
     }
 
-    final_model = build_model()
-    final_model.fit(features, target)
-
     output_dir = Path(models_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     model_path = _next_model_path(output_dir)
-    joblib.dump(final_model, model_path)
+    joblib.dump(evaluation_model, model_path)
     return model_path, metrics

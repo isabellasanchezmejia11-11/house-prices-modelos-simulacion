@@ -1,10 +1,7 @@
-# Fase 1 — Modelo Predictivo: House Prices
+# Fase 1 — Modelo predictivo: House Prices
 
-Proyecto Semestral — Modelos y Simulación de Sistemas I
-
-Universidad de Antioquia
-
-2026-II
+Proyecto Integrador — Modelos y Simulación de Sistemas I
+Universidad de Antioquia — 2026-II
 
 ## Integrantes
 
@@ -12,119 +9,81 @@ Universidad de Antioquia
 - Isabella Sánchez Mejía.
 - Maria Alejandra Otálvaro Ramírez.
 
-## Descripción del problema
+## Problema y datos
 
-Este proyecto desarrolla un modelo predictivo para estimar el precio de
-venta de viviendas residenciales en Ames, Iowa, a partir de sus
-características físicas, estructurales, de ubicación y de calidad. Es un
-problema de aprendizaje supervisado de tipo regresión, donde la variable
-objetivo es `SalePrice` (precio de venta en dólares).
+El proyecto estima el precio de venta `SalePrice` de viviendas residenciales
+de Ames, Iowa, a partir de sus características físicas, estructurales, de
+ubicación y calidad. Es un problema supervisado de regresión basado en la
+competición [House Prices — Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques).
+El conjunto de entrenamiento contiene 1.460 viviendas.
 
-## Fuente del conjunto de datos
+## Modelo y preprocesamiento
 
-Competición de Kaggle "House Prices — Advanced Regression Techniques"
-(https://www.kaggle.com/c/house-prices-advanced-regression-techniques).
-1460 observaciones y 81 variables (numéricas y categóricas) relacionadas
-con la calidad, el estado, la ubicación y las dimensiones de las
-viviendas.
+Se utiliza Regresión Lineal (`LinearRegression`) dentro de un pipeline y se
+compara con `DummyRegressor` (estrategia `mean`). El pipeline aplica las reglas
+semánticas de ausencia, deriva `HasGarage`, prepara `GarageYrBlt`, imputa
+numéricas con la mediana y categóricas con la moda, escala las numéricas y
+codifica las categorías con One-Hot. Las reglas semánticas y los imputadores
+se aplican dentro del flujo reutilizable, tanto al entrenar como al predecir.
 
-## Objetivo del modelo
+Los ocho faltantes reales de `MasVnrType` y `MasVnrArea` se conservan como
+desconocidos: no se asume que representen ausencia de mampostería o área cero.
+La categoría desconocida se imputa con la moda y el área con la mediana,
+aprendidas únicamente durante el ajuste con los datos de entrenamiento.
 
-Predecir el precio de venta (`SalePrice`) de una vivienda a partir de sus
-características, construyendo una solución reproducible y correctamente
-documentada que sirva como base para las siguientes fases del proyecto
-(scripts ejecutables, API REST y monitoreo).
+`SaleType` y `SaleCondition` se excluyen de las variables predictoras porque
+el escenario de uso es estimar el precio antes de que ocurra la venta. Se
+conservan `MoSold` y `YrSold` como fecha prevista de venta. `SaleCondition`
+solo se utiliza para identificar los registros atípicos documentados; no se
+usa como predictor.
 
-## Algoritmo utilizado
+## Partición, evaluación y resultados
 
-Regresión Lineal (`LinearRegression` de scikit-learn), integrada dentro
-de un `Pipeline` que combina:
-- Transformaciones semánticas reproducibles para representar las categorías
-  de ausencia, crear `HasGarage` y preparar `GarageYrBlt`.
-- Imputación de valores faltantes (mediana para numéricas, categoría más
-  frecuente para categóricas).
-- Codificación One-Hot para variables categóricas.
-- Escalamiento estándar para variables numéricas.
+Se usa una partición aleatoria 80/20 con `random_state=42`. Las viviendas con
+`Id` 524 y 1299 (ventas `Partial` con `GrLivArea > 4000`) se excluyen solo del
+conjunto de entrenamiento. El split se realiza antes de ajustar el pipeline;
+las estadísticas de imputación, escalamiento y codificación se aprenden solo
+con train. El modelo persistido corresponde al pipeline ajustado con ese
+conjunto de entrenamiento filtrado.
 
-Los ocho valores faltantes de `MasVnrType` y `MasVnrArea` se conservan como
-desconocidos; no se asume que indiquen ausencia de mampostería. La categoría
-desconocida se imputa con la moda y el área con la mediana aprendidas por el
-pipeline únicamente durante el ajuste sobre entrenamiento. `HasGarage` y las
-reglas semánticas se aplican dentro del mismo pipeline, también al predecir
-registros nuevos.
+| Métrica | DummyRegressor | Regresión lineal |
+|---|---:|---:|
+| MAE | $62,580.40 | $21,182.45 |
+| RMSE | $87,619.50 | $64,975.84 |
+| R² | -0.0009 | 0.4496 |
 
-Se comparó contra un modelo base (`DummyRegressor`, estrategia `mean`)
-como punto de referencia.
+Como análisis del momento de predicción, el notebook también compara un
+pipeline que usa `SaleType` y `SaleCondition` con el modelo principal que las
+excluye. Con esas variables la evaluación obtiene MAE = $21,355.53,
+RMSE = $65,779.88 y R² = 0.4359; sin ellas obtiene MAE = $21,182.45,
+RMSE = $64,975.84 y R² = 0.4496. Además de la mejora observada, excluirlas
+evita depender de información que no está disponible antes de concretar la
+venta.
 
-## Métrica empleada
-
-Se utilizaron tres métricas de evaluación para problemas de regresión:
-**MAE**, **RMSE** y **R²**, calculadas sobre el conjunto de prueba (20%
-de los datos, separados con `random_state` fijo para reproducibilidad).
-La partición se realiza antes del ajuste del pipeline; imputación,
-escalamiento y codificación se aprenden únicamente con el conjunto de
-entrenamiento. Tras reportar las métricas del holdout, el artefacto final se
-reentrena con todos los datos disponibles para su uso posterior.
-
-## Momento de predicción y variables disponibles
-
-La predicción se define al cierre/registro de una venta, no antes de que ocurra.
-En ese momento deben estar disponibles `YrSold`, `MoSold`, `SaleType` y
-`SaleCondition`, que se usan como variables predictoras. Si el objetivo cambia
-a estimar un precio antes de la venta, estas variables deben excluirse y el
-modelo debe evaluarse de nuevo bajo ese escenario.
-
-## Principales resultados
-
-| Métrica | Modelo base (Dummy) | Regresión Lineal |
-|---|---|---|
-| MAE  | $62,575.93 | $21,108.07 |
-| RMSE | $87,619.03 | $65,385.64 |
-| R²   | -0.0009    | 0.4426     |
-
-La Regresión Lineal mejora de forma considerable al modelo base en las
-tres métricas: reduce el error absoluto promedio (MAE) en más de
-$41,000, reduce el RMSE en aproximadamente $22,000, y pasa de explicar
-prácticamente nada de la variabilidad del precio (R² ≈ 0) a explicar
-cerca del **44.3%** de ella. Esto confirma que incorporar las
-características de las viviendas aporta valor predictivo real frente a
-simplemente estimar el precio promedio.
-
-## Instrucciones para ejecutar el notebook
+## Ejecución del notebook
 
 1. Clonar el repositorio:
    ```bash
    git clone https://github.com/isabellasanchezmejia11-11/house-prices-modelos-simulacion.git
    ```
-2. Descargar `train.csv` desde la competición de Kaggle
-   (House Prices – Advanced Regression Techniques) y ubicarlo dentro de
-   la carpeta `fase-1/`.
-3. Instalar las dependencias con las versiones exactas utilizadas:
+2. Asegurarse de que `train.csv` esté en `fase-1/`. El repositorio incluye el
+   conjunto `test.csv` de Kaggle para generar predicciones.
+3. Instalar las dependencias utilizadas:
    ```bash
-   pip install pandas==3.0.5 numpy==2.4.6 scikit-learn==1.9.0 joblib==1.6.0
+   python -m pip install pandas==3.0.5 numpy==2.4.6 scikit-learn==1.9.0 joblib==1.6.0 matplotlib==3.11.1 seaborn==0.13.2
    ```
-   El notebook también utiliza `matplotlib` y `seaborn` para las gráficas:
-   ```bash
-   pip install matplotlib seaborn
-   ```
-4. Abrir `fase-1/notebook.ipynb` y ejecutar todas las celdas en orden
-   (Kernel → Restart & Run All).
-5. Al finalizar, el modelo entrenado quedará guardado en
-   `fase-1/modelo.joblib`, listo para cargarse y generar nuevas
-   predicciones sin necesidad de reentrenar.
+4. Desde `fase-1/`, abrir `notebook.ipynb` y ejecutar **Restart & Run All**.
 
-El notebook se debe ejecutar desde la raíz del repositorio o desde `fase-1/`.
-Utiliza el preprocesador semántico compartido ubicado en `fase-2/house_prices/`;
-por ello, se conserva `fase-2` junto al notebook al clonar el repositorio.
+El notebook guarda el pipeline entrenado en `fase-1/modelo.joblib`. El modelo
+acepta las variables predictoras originales; descarta `Id`, `SalePrice` si
+está presente, `SaleType` y `SaleCondition`, y calcula `HasGarage` durante el
+preprocesamiento.
 
-## Dependencias (versiones exactas)
+## Dependencias probadas
 
 - pandas==3.0.5
 - numpy==2.4.6
 - scikit-learn==1.9.0
 - joblib==1.6.0
-
-## Dependencias adicionales para las gráficas del notebook:
-
-- matplotlib
-- seaborn
+- matplotlib==3.11.1
+- seaborn==0.13.2

@@ -21,18 +21,19 @@ guardar una nueva versión:
 python fase-2/train.py --data fase-1/train.csv --models-dir fase-2/models
 ```
 
-El comando imprime MAE, RMSE y R² en el conjunto de prueba. El pipeline final
-se vuelve a ajustar con todos los registros después de medir esas métricas y se
-guarda como `house_prices_<fecha-UTC>.joblib` en el directorio indicado. Cada
-ejecución crea una versión nueva; conserva la ruta impresa para identificar el
-modelo que usarás.
+El comando imprime MAE, RMSE y R² en el conjunto de prueba. La partición se
+realiza antes del preprocesamiento; los outliers documentados (Id 524 y 1299,
+con `SaleCondition == "Partial"` y `GrLivArea > 4000`) se excluyen solo de
+entrenamiento. El pipeline guardado se ajusta exclusivamente con ese conjunto
+de entrenamiento filtrado, sin usar el holdout. Se guarda como
+`house_prices_<fecha-UTC>.joblib`; cada ejecución crea una versión nueva.
+Conserva la ruta impresa para identificar el modelo que usarás.
 
 Para predecir con registros sin la variable objetivo:
 
-Prepara `fase-1/test.csv` descargando el archivo `test.csv` de la competición
-de Kaggle, o crea un CSV con la misma estructura de variables predictoras de
-`train.csv` (sin `SalePrice`). Este repositorio incluye `train.csv`, pero no
-incluye el conjunto de prueba de Kaggle.
+El repositorio incluye `fase-1/test.csv`, descargado de la competición de
+Kaggle. También puedes proporcionar otro CSV con las variables predictoras
+originales, sin `SalePrice`.
 
 ```powershell
 python fase-2/predict.py `
@@ -51,7 +52,7 @@ como predictor. La salida contiene `SalePricePrediction`.
 Construye la imagen desde la raíz del repositorio:
 
 ```bash
-docker build -t house-prices-fase2 -f fase-2/Dockerfile fase-2
+docker buildx build --load -t house-prices-fase2 -f fase-2/Dockerfile fase-2
 ```
 
 En PowerShell, monta `fase-1` en `/data` para leer los datos y persistir modelos
@@ -75,7 +76,8 @@ se requiere Docker Compose.
 
 ## Preprocesamiento y momento de predicción
 
-- `Id` se elimina del conjunto de predictores.
+- `Id` se elimina del conjunto de predictores; se usa durante entrenamiento
+  únicamente para reproducir el filtro documentado de los dos outliers.
 - Las categorías de variables de espacios ausentes (por ejemplo, sótano,
   garaje o piscina) se representan con la categoría `"None"` y se añade
   `HasGarage` dentro del pipeline.
@@ -87,11 +89,11 @@ se requiere Docker Compose.
 - Las variables numéricas se imputan con mediana y escalan; las categóricas se
   imputan con la categoría más frecuente y se codifican con One-Hot. Las
   categorías nuevas durante predicción se toleran.
-- La predicción se plantea en el momento de cierre/registro de la venta: `YrSold`,
-  `MoSold`, `SaleType` y `SaleCondition` deben estar disponibles en ese momento.
-  No se utilizan para estimar un precio previo a la venta. `SalePrice` se usa
-  exclusivamente como objetivo durante entrenamiento y se descarta si aparece
-  accidentalmente en el CSV de entrada para predecir.
+- La predicción se plantea antes de concretar la venta. Se conservan `YrSold`
+  y `MoSold` como fecha prevista, pero `SaleType` y `SaleCondition` se excluyen
+  porque describen la transacción y no están disponibles al tasar/publicar la
+  vivienda. `SalePrice` se usa exclusivamente como objetivo durante
+  entrenamiento y se descarta si aparece en el CSV de predicción.
 - La evaluación se realiza en un split aleatorio reproducible con semilla 42.
   Imputación, escalamiento y codificación se ajustan dentro del pipeline solo
   con el split de entrenamiento durante la evaluación.

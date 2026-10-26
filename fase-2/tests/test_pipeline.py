@@ -16,6 +16,9 @@ def sample_data() -> pd.DataFrame:
             "MasVnrType": ["BrkFace", "None", np.nan, "Stone", "None"] * 2,
             "MasVnrArea": [196.0, 0.0, np.nan, 120.0, 0.0] * 2,
             "OverallQual": [7, 5, 6, 8, 4] * 2,
+            "GrLivArea": [1710, 1262, 1786, 2198, 1362] * 2,
+            "SaleType": ["WD", "New", "WD", "WD", "COD"] * 2,
+            "SaleCondition": ["Normal", "Partial", "Normal", "Normal", "Abnorml"] * 2,
             "SalePrice": [208500, 181000, 223500, 250000, 129500] * 2,
         }
     )
@@ -34,6 +37,8 @@ def test_semantic_preprocessing_keeps_masonry_unknown_distinct_from_absence():
     assert pd.isna(transformed.loc[2, "MasVnrArea"])
     assert transformed.loc[1, "MasVnrArea"] == 0
     assert "Id" not in transformed.columns
+    assert "SaleType" not in transformed.columns
+    assert "SaleCondition" not in transformed.columns
 
 
 def test_training_saves_loadable_model_and_prediction_csv(tmp_path):

@@ -23,6 +23,8 @@ ABSENCE_CATEGORIES = (
     "MiscFeature",
 )
 
+SALE_FEATURES = ("SaleType", "SaleCondition")
+
 
 class SemanticPreprocessor(BaseEstimator, TransformerMixin):
     """Aplica reglas de dominio sin aprender estadísticas de los datos."""
@@ -41,17 +43,27 @@ class SemanticPreprocessor(BaseEstimator, TransformerMixin):
             raise ValueError("Falta la columna requerida 'GarageType'.")
 
         transformed = X.copy()
-        transformed = transformed.drop(columns=["Id", "SalePrice"], errors="ignore")
+        transformed = transformed.drop(
+            columns=["Id", "SalePrice", *SALE_FEATURES],
+            errors="ignore",
+        )
 
         for column in ABSENCE_CATEGORIES:
             if column in transformed.columns:
-                transformed[column] = transformed[column].fillna("None")
+                values = transformed[column]
+                missing = values.isna() | values.astype("string").eq("NA").fillna(False)
+                transformed[column] = values.astype(object).where(~missing, "None")
 
-        transformed["HasGarage"] = (
-            transformed["GarageType"].astype("object").fillna("None") != "None"
-        ).astype("int64")
+        garage_type = transformed["GarageType"]
+        garage_text = garage_type.astype("string")
+        no_garage = (
+            garage_type.isna()
+            | garage_text.eq("NA").fillna(False)
+            | garage_text.eq("None").fillna(False)
+        )
+        transformed["HasGarage"] = (~no_garage).astype("int64")
 
         if "GarageYrBlt" in transformed.columns:
-            transformed["GarageYrBlt"] = transformed["GarageYrBlt"].fillna(0)
+            transformed.loc[no_garage, "GarageYrBlt"] = 0
 
         return transformed
