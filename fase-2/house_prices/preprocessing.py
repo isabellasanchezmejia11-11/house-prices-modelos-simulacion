@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -34,6 +35,7 @@ class SemanticPreprocessor(BaseEstimator, TransformerMixin):
             raise TypeError("Las variables predictoras deben ser un DataFrame de pandas.")
         if "GarageType" not in X.columns:
             raise ValueError("Falta la columna requerida 'GarageType'.")
+        self.feature_names_in_ = np.asarray(X.columns, dtype=object)
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
