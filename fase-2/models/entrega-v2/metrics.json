@@ -1,0 +1,29 @@
+{
+  "target": "SalePrice",
+  "source_data": "../fase-1/train.csv",
+  "split": {
+    "test_size": 0.2,
+    "seed": 42,
+    "training_rows": 1166,
+    "test_rows": 292,
+    "training_outlier_ids_removed": [
+      524,
+      1299
+    ]
+  },
+  "models": {
+    "linear_regression": {
+      "mae": 21182.452486521997,
+      "rmse": 64975.838858927884,
+      "r2": 0.4495853864121889
+    },
+    "dummy_regressor": {
+      "strategy": "mean",
+      "metrics": {
+        "mae": 62580.400179750475,
+        "rmse": 87619.49766694316,
+        "r2": -0.0008930733889664921
+      }
+    }
+  }
+}

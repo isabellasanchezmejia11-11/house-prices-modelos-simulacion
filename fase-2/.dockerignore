@@ -1,0 +1,39 @@
+﻿# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Caches y archivos compilados
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git
+.git/
+.gitignore
+
+# Credenciales
+.env
+.env.*
+.kaggle/
+**/kaggle.json
+**/*.pem
+**/*.key
+
+# Datos y resultados
+data/
+models/
+outputs/
+predictions.csv
+
+# Archivos innecesarios para ejecutar la aplicacion
+tests/
+README.md
+requirements-dev.txt
+.vscode/
+.idea/
+*.log
+*.tmp
+*.bak
