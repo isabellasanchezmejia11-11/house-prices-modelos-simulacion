@@ -358,3 +358,25 @@ el manejo de entradas inválidas y la disponibilidad de ayuda por comandos.
 
 En la comprobación local con Windows, Python 3.13.14 y pytest 8.4.2,
 las 10 pruebas existentes finalizaron correctamente.
+
+## Pruebas complementarias del punto 12
+
+Las pruebas complementarias se implementaron en `fase-2/tests/test_requisitos_fase2.py`, sin reemplazar las pruebas existentes de `fase-2/tests/test_pipeline.py`.
+
+- **Predicción con valores faltantes (`test_prediccion_con_valores_faltantes`)**: verifica que el pipeline genere predicciones finitas con valores nulos permitidos y conserve la cantidad y los identificadores de las viviendas.
+- **Versionamiento (`test_versionamiento_de_modelos`)**: comprueba la creación y carga de dos versiones, el rechazo de un identificador ya existente mediante `FileExistsError` y la conservación del contenido del modelo original.
+- **Persistencia (`test_predicciones_se_conservan_al_guardar_modelo`)**: compara las predicciones del pipeline entrenado antes de guardarlo con las obtenidas después de recuperarlo mediante `joblib`, utilizando `numpy.testing.assert_allclose` con `rtol=1e-6` y `atol=1e-6`.
+
+Para ejecutar únicamente estas tres pruebas desde la carpeta `fase-2`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_requisitos_fase2.py -v
+```
+
+Para ejecutar todas las pruebas desde la misma carpeta:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -v
+```
+
+**Resultado de la ejecución local:** 13 pruebas aprobadas, sin fallos (10 existentes y 3 complementarias), en Windows con Python 3.13.14 y pytest 8.4.2. Las pruebas complementarias usan datos sintéticos y directorios temporales de pytest para no modificar las versiones de entrega.
