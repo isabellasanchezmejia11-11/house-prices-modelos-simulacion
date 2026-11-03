@@ -483,9 +483,15 @@ El verificador no sustituye las pruebas de pytest: ambas comprobaciones se ejecu
 - **Bibliotecas utilizadas:** `scikit-learn`, `pandas`, `numpy`, `joblib` y `pytest`, en las versiones fijadas en `requirements.txt`.
 - **Configuración de hilos de OpenBLAS:** [Runtime variables](https://www.openmathlib.org/OpenBLAS/docs/runtime_variables/).
 
-## 13. Referencia de integración
+## 13. Identificación de la entrega
 
-La integración de la Fase 2 en `develop`, incluido el verificador de Docker, se identifica mediante el commit [`ee4d6e088b1cf43cc262e62ed2742540ad624781`](https://github.com/isabellasanchezmejia11-11/house-prices-modelos-simulacion/commit/ee4d6e088b1cf43cc262e62ed2742540ad624781), correspondiente al merge del Pull Request #20 el 3 de noviembre de 2026.
+La Fase 2 se integró en `main` mediante el Pull Request #21,
+el 3 de noviembre de 2026.
+
+El commit de integración de la entrega es `025dde3`.
+
+Las versiones `entrega-v1` y `entrega-v2` identifican los artefactos
+del modelo y son independientes del identificador del código.
 
 Esta referencia identifica el código integrado que documenta esta revisión.
 
