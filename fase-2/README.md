@@ -1,6 +1,6 @@
 # Fase 2 — Scripts, versionamiento y Docker
 
-Proyecto Integrador — Modelos y Simulación de Sistemas I
+Proyecto Integrador — Modelos y Simulación de Sistemas I  
 Universidad de Antioquia · 2026-II
 
 ## Integrantes
@@ -11,67 +11,52 @@ Universidad de Antioquia · 2026-II
 
 ## 1. Descripción del proyecto y continuidad con la Fase 1
 
-El proyecto estima el precio de venta de viviendas residenciales de Ames, Iowa, mediante aprendizaje supervisado de **regresión**. La variable objetivo es `SalePrice` y las variables de entrada describen características físicas, estructurales, de ubicación y calidad de las viviendas. Los datos proceden de la competición [House Prices — Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data), cuyo conjunto de entrenamiento contiene **1.460 viviendas**.
+El proyecto estima el precio de venta de viviendas residenciales de Ames, Iowa, mediante aprendizaje supervisado de **regresión**. La variable objetivo es `SalePrice` y las variables de entrada describen características físicas, estructurales, de ubicación y calidad de las viviendas.
+
+Los datos proceden de la competición [House Prices — Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data), cuyo conjunto de entrenamiento contiene **1.460 viviendas**.
 
 En la **Fase 1** se desarrolló el análisis y el entrenamiento de un modelo de regresión lineal (`LinearRegression`) en `fase-1/notebook.ipynb`, con preprocesamiento y comparación frente a un modelo base (`DummyRegressor`, estrategia `mean`).
 
 En la **Fase 2** se mantiene el problema y el enfoque de modelado, pero se convierte el trabajo del notebook en una aplicación reutilizable. El entrenamiento y la predicción se ejecutan desde la terminal, sin abrir el notebook, mediante un pipeline persistido, modelos versionados, pruebas con `pytest` y contenedores Docker.
 
-### Cambios y correcciones conservados respecto a la Fase 1
+### Cambios y correcciones respecto a la Fase 1
 
 - Separación de los comandos `train.py` y `predict.py` y de la lógica reutilizable en el paquete `house_prices/`.
-- Partición de entrenamiento/prueba **antes** de ajustar imputación, escalamiento y codificación, para evitar fuga de información.
-- Tratamiento semántico de valores faltantes, distinguiendo ausencia real de dato desconocido. Los ocho nulos documentados de `MasVnrType` y `MasVnrArea` se conservan como desconocidos, no se convierten automáticamente en ausencia de mampostería.
+- Partición de entrenamiento y prueba **antes** de ajustar imputación, escalamiento y codificación, para evitar fuga de información.
+- Tratamiento semántico de valores faltantes, distinguiendo ausencia real de dato desconocido. Los ocho nulos documentados de `MasVnrType` y `MasVnrArea` se conservan como desconocidos; no se convierten automáticamente en ausencia de mampostería.
 - Uso de la variable derivada `HasGarage` y tratamiento de `GarageYrBlt` dentro del preprocesamiento.
 - Exclusión de `SaleType` y `SaleCondition` como predictores, porque corresponden a información de la transacción que no necesariamente está disponible antes de la venta. `SaleCondition` se conserva únicamente para el filtro de valores atípicos documentado.
 - Retiro de las viviendas con `Id` 524 y 1299, cuando cumplen las condiciones documentadas, **solo del conjunto de entrenamiento**.
-- Evaluación del modelo y del `DummyRegressor` sobre la misma partición, almacenamiento de métricas y metadatos, y pruebas automatizadas.
+- Evaluación del modelo y del `DummyRegressor` sobre la misma partición.
+- Almacenamiento de métricas, metadatos y versiones del pipeline completo.
+- Incorporación de pruebas automatizadas y un verificador integral de Docker.
 
 ## 2. Organización del repositorio
 
-```text
-house-prices-modelos-simulacion/
-├── fase-1/
-│   ├── README.md
-│   ├── notebook.ipynb
-│   ├── train.csv
-│   ├── test.csv
-│   └── modelo.joblib
-├── fase-2/
-│   ├── train.py
-│   ├── predict.py
-│   ├── requirements.txt
-│   ├── requirements-dev.txt
-│   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── README.md
-│   ├── house_prices/
-│   │   ├── data.py
-│   │   ├── preprocessing.py
-│   │   ├── pipeline.py
-│   │   ├── model.py
-│   │   ├── storage.py
-│   │   └── prediction.py
-│   ├── data/
-│   │   └── example_prediction.csv
-│   ├── tests/
-│   │   ├── test_pipeline.py
-│   │   └── test_requisitos_fase2.py
-│   ├── models/
-│   │   ├── entrega-v1/
-│   │   │   ├── model.joblib
-│   │   │   ├── metrics.json
-│   │   │   └── metadata.json
-│   │   └── entrega-v2/
-│   │       ├── model.joblib
-│   │       ├── metrics.json
-│   │       └── metadata.json
-│   └── outputs/              # Se genera al guardar predicciones
-├── pytest.ini
-└── .gitignore
-```
+| Ruta | Contenido |
+|---|---|
+| `fase-1/` | Entrega anterior: notebook, datos, modelo y documentación |
+| `fase-2/train.py` | Entrada de entrenamiento por línea de comandos |
+| `fase-2/predict.py` | Entrada de predicción por línea de comandos |
+| `fase-2/verify_docker.py` | Verificación integral automatizada de Docker |
+| `fase-2/requirements.txt` | Dependencias con versiones explícitas |
+| `fase-2/requirements-dev.txt` | Referencia a las dependencias del proyecto |
+| `fase-2/Dockerfile` | Construcción de la imagen |
+| `fase-2/.dockerignore` | Exclusiones del contexto de construcción |
+| `fase-2/README.md` | Documentación de la Fase 2 |
+| `fase-2/house_prices/` | Lógica reutilizable de la aplicación |
+| `fase-2/data/example_prediction.csv` | Ejemplo de predicción sin variable objetivo |
+| `fase-2/tests/test_pipeline.py` | Pruebas del pipeline y de la interfaz CLI |
+| `fase-2/tests/test_requisitos_fase2.py` | Pruebas complementarias de los requisitos |
+| `fase-2/models/entrega-v1/` | Modelo, métricas y metadatos de la primera versión |
+| `fase-2/models/entrega-v2/` | Modelo, métricas y metadatos de la segunda versión |
+| `fase-2/outputs/` | Resultados generados durante las ejecuciones |
+| `pytest.ini` | Configuración de las pruebas |
+| `.gitignore` | Exclusiones del control de versiones |
 
-Los scripts son interfaces de línea de comandos con `argparse`. Las responsabilidades se distribuyen así:
+La carpeta `outputs/` se crea cuando se guardan predicciones.
+
+Los scripts son interfaces de línea de comandos con `argparse`. Las responsabilidades del paquete `house_prices/` se distribuyen así:
 
 | Archivo | Responsabilidad |
 |---|---|
@@ -82,7 +67,7 @@ Los scripts son interfaces de línea de comandos con `argparse`. Las responsabil
 | `storage.py` | Guardado y carga de versiones y artefactos |
 | `prediction.py` | Validación, predicción y escritura del CSV de salida |
 
-Los directorios `models/` pueden contener versiones adicionales generadas para comprobaciones locales. Esas versiones no sustituyen a `entrega-v1` y `entrega-v2`.
+La carpeta `models/` puede contener versiones adicionales generadas para comprobaciones locales. Estas no sustituyen a `entrega-v1` y `entrega-v2`.
 
 ## 3. Requisitos y preparación local
 
@@ -103,10 +88,14 @@ Las dependencias de `fase-2/requirements.txt` están fijadas:
 ### 3.1. Crear el entorno virtual
 
 ```powershell
-python -m venv fase-2/.venv
+py -3.13 -m venv fase-2/.venv
 ```
 
-También puede utilizarse `py -3.13 -m venv fase-2/.venv` en equipos con el lanzador `py` instalado.
+Si Python 3.13 ya es el intérprete predeterminado, también puede utilizarse:
+
+```powershell
+python -m venv fase-2/.venv
+```
 
 Instalar las dependencias utilizando el Python del entorno:
 
@@ -150,14 +139,20 @@ python fase-2/predict.py --help
 
 El repositorio incluye estos archivos, por lo que no se necesita una sesión abierta de Kaggle ni ejecutar primero el notebook de Fase 1.
 
-**Esquema del CSV de predicción:** debe contener las columnas predictoras esperadas por la versión del modelo guardado, con tipos compatibles. **No debe incluir `SalePrice`.** `GarageType` es una columna comprobada explícitamente durante la validación. `Id`, `SaleType` y `SaleCondition` son opcionales al predecir porque no son predictores del modelo; si aparece `Id`, se conserva en la salida.
+### Esquema del CSV de predicción
+
+Debe contener las columnas predictoras esperadas por la versión del modelo guardado, con tipos compatibles. **No debe incluir `SalePrice`.**
+
+`GarageType` es una columna comprobada explícitamente durante la validación. `Id`, `SaleType` y `SaleCondition` son opcionales al predecir porque no son predictores del modelo; si aparece `Id`, se conserva en la salida.
 
 - Los valores faltantes permitidos se tratan con el pipeline previamente ajustado; una celda nula no equivale a una columna obligatoria ausente.
 - Las columnas se reordenan según el esquema guardado; las adicionales se ignoran.
 - Las categorías nuevas se admiten mediante la codificación One-Hot configurada.
 - Si falta una columna obligatoria, hay tipos incompatibles o no existe el modelo, se informa el error y no se genera una salida aparentemente válida.
 
-**Salida:** un CSV con `SalePricePrediction` y, cuando se incluye en la entrada, `Id`, manteniendo el orden y la cantidad de filas.
+### Salida
+
+Se genera un CSV con `SalePricePrediction` y, cuando se incluye en la entrada, `Id`, manteniendo el orden y la cantidad de filas.
 
 Ejemplo de encabezado y resultado:
 
@@ -182,19 +177,18 @@ Los argumentos son:
 | `--target` | Columna objetivo (`SalePrice`) |
 | `--output-dir` | Carpeta donde guardar versiones |
 | `--version` | Identificador único para esta ejecución |
-| `--seed` | Semilla para reproducir la partición (por defecto, 42) |
-| `--test-size` | Proporción de evaluación (por defecto, 0.2) |
+| `--seed` | Semilla para reproducir la partición; por defecto, 42 |
+| `--test-size` | Proporción de evaluación; por defecto, 0.2 |
 
-Se realiza una partición aleatoria **80/20**. El preprocesamiento se ajusta exclusivamente con los datos de entrenamiento y se aplica al conjunto de prueba sin reajustarlo. El comando también compara la regresión lineal con `DummyRegressor`.
+Con la configuración del ejemplo se realiza una partición aleatoria **80/20**. El preprocesamiento se ajusta exclusivamente con los datos de entrenamiento y se aplica al conjunto de prueba sin reajustarlo.
 
-La ejecución crea, por ejemplo:
+El comando también compara la regresión lineal con `DummyRegressor` y muestra las métricas y las rutas de los archivos generados.
 
-```text
-fase-2/models/nueva-v1/
-  model.joblib
-  metrics.json
-  metadata.json
-```
+La ejecución crea:
+
+- `fase-2/models/nueva-v1/model.joblib`
+- `fase-2/models/nueva-v1/metrics.json`
+- `fase-2/models/nueva-v1/metadata.json`
 
 Si el identificador ya existe, el entrenamiento rechaza la sobrescritura. Debe usarse una versión nueva.
 
@@ -239,29 +233,21 @@ Los valores atípicos documentados (`Id` 524 y 1299 con `SaleCondition == "Parti
 
 La regresión lineal supera al modelo base en las tres métricas reportadas. Las cifras corresponden al conjunto de evaluación con la partición y configuración documentadas; no representan una garantía de precisión para cualquier vivienda.
 
-**Limitaciones conocidas:** un R² cercano a 0,45 deja una parte importante de la variabilidad sin explicar; el resultado depende de los datos disponibles y del escenario de Ames. La imputación y la codificación siguen las reglas aprendidas durante el entrenamiento. Entre equipos o bibliotecas de álgebra lineal pueden existir pequeñas diferencias numéricas, aunque se conserve la semilla 42.
+**Limitaciones conocidas:** un R² cercano a 0,45 deja una parte importante de la variabilidad sin explicar; el resultado depende de los datos disponibles y del escenario de Ames. Entre equipos o bibliotecas de álgebra lineal pueden existir pequeñas diferencias numéricas, aunque se conserve la semilla 42.
 
 En una comprobación previa documentada, dos entrenamientos con los mismos datos y configuración (`v1` y `comprobacion_punto8`) presentaron las mismas métricas y sus predicciones se compararon con `numpy.testing.assert_allclose` (`rtol=1e-10`, `atol=1e-8`).
 
 ## 8. Versionamiento y persistencia de modelos
 
-Las dos versiones destinadas a la entrega son:
+Las dos versiones destinadas a la entrega son `entrega-v1` y `entrega-v2`, almacenadas en `fase-2/models/`.
 
-```text
-fase-2/models/
-  entrega-v1/
-    model.joblib
-    metrics.json
-    metadata.json
-  entrega-v2/
-    model.joblib
-    metrics.json
-    metadata.json
-```
+Cada versión contiene:
 
-- **`model.joblib`**: pipeline y estimador ajustados.
-- **`metrics.json`**: métricas del modelo y del `DummyRegressor`, partición y parámetros de evaluación.
-- **`metadata.json`**: versión, fecha UTC, variable objetivo, algoritmo y parámetros, columnas y tipos, referencia al dataset, cantidades de registros, semilla, partición, versiones de bibliotecas y huellas SHA-256 de datos, código y dependencias.
+| Archivo | Contenido |
+|---|---|
+| `model.joblib` | Pipeline y estimador ajustados |
+| `metrics.json` | Métricas del modelo y del `DummyRegressor`, partición y parámetros de evaluación |
+| `metadata.json` | Versión, fecha UTC, objetivo, algoritmo, parámetros, columnas, tipos, datos utilizados, cantidades de registros, semilla, partición, entorno y huellas SHA-256 |
 
 Las versiones `entrega-v1` y `entrega-v2` se generaron con la misma semilla, datos y configuración, por lo que reportan las mismas métricas. Ambas pueden cargarse para predecir de manera independiente:
 
@@ -270,7 +256,11 @@ python fase-2/predict.py --model fase-2/models/entrega-v1 --input fase-2/data/ex
 python fase-2/predict.py --model fase-2/models/entrega-v2 --input fase-2/data/example_prediction.csv --output fase-2/outputs/entrega-v2.csv
 ```
 
-Las versiones de entrega deben estar disponibles en el repositorio o mediante un enlace de descarga documentado, junto con sus tres artefactos. Las versiones temporales de práctica o validación no deben confundirse con ellas.
+Las versiones existentes no se sobrescriben silenciosamente. Los modelos, sus métricas y sus metadatos se conservan en carpetas independientes.
+
+Los metadatos incluyen huellas SHA-256 de los datos, del código de la aplicación y de `requirements.txt`, además de la versión de Python y las bibliotecas utilizadas.
+
+Las versiones temporales de práctica o validación no deben confundirse con las versiones de entrega.
 
 ## 9. Pruebas automatizadas con `pytest`
 
@@ -313,13 +303,32 @@ Las pruebas complementarias utilizan datos sintéticos y carpetas temporales de 
 
 **Resultado verificado en Windows:** 13 pruebas aprobadas, sin fallos (10 originales y 3 complementarias), con Python 3.13.14 y pytest 8.4.2.
 
+### Ajuste de OpenBLAS en Windows
+
+En la validación local del 3 de noviembre de 2026 se observó el mensaje `OpenBLAS error: Memory allocation still failed` al iniciar los subprocesos que comprueban la interfaz de línea de comandos.
+
+La ejecución se completó limitando a un hilo las bibliotecas de cálculo numérico. Si aparece este error, ejecutar desde la **raíz del repositorio**, en la misma sesión de PowerShell:
+
+```powershell
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:OMP_NUM_THREADS = "1"
+
+.\fase-2\.venv\Scripts\python.exe -m pytest fase-2/tests -q
+```
+
+Las variables afectan a esa sesión y a los procesos que se inicien desde ella. El resultado observado fue **13 pruebas aprobadas en 8,64 segundos**.
+
+Este ajuste no modifica los datos, las pruebas ni los modelos guardados.
+
 ## 10. Ejecución con Docker
 
-Docker Desktop debe estar iniciado y utilizando contenedores Linux. El `Dockerfile` usa `python:3.13-slim`, instala `requirements.txt` y copia los scripts y el paquete reutilizable. El entrenamiento **no** se ejecuta durante `docker build`.
+Docker Desktop debe estar iniciado y utilizando contenedores Linux. El `Dockerfile` usa `python:3.13-slim`, instala `requirements.txt` y copia los scripts y el paquete reutilizable.
+
+El entrenamiento **no** se ejecuta durante `docker build`.
 
 El `Dockerfile` configura `ENTRYPOINT ["python"]`; por tanto, en `docker run` se indica directamente `train.py` o `predict.py`, **sin escribir `python` nuevamente**.
 
-**Todos los comandos Docker siguientes se ejecutan desde la carpeta `fase-2` en PowerShell.**
+**Los comandos de las secciones 10.1 a 10.6 se ejecutan desde la carpeta `fase-2` en PowerShell.** La sección 10.7 indica también la alternativa desde la raíz.
 
 ### 10.1. Construir la imagen
 
@@ -366,7 +375,9 @@ docker run --rm `
   --output /app/outputs/predicciones_docker.csv
 ```
 
-Las predicciones permanecen en `fase-2/outputs/predicciones_docker.csv`. Para inspeccionar las primeras filas desde PowerShell, aún dentro de `fase-2`:
+Las predicciones permanecen en `fase-2/outputs/predicciones_docker.csv`.
+
+Para inspeccionar las primeras filas desde PowerShell, aún dentro de `fase-2`:
 
 ```powershell
 Get-Content .\outputs\predicciones_docker.csv -TotalCount 6
@@ -376,7 +387,7 @@ Para usar el archivo de ejemplo en lugar de `test.csv`, se puede montar `data/ex
 
 ### 10.5. Ejecutar las pruebas con Docker
 
-Las pruebas no se copian dentro de la imagen de producción debido a `.dockerignore`; se montan temporalmente los archivos necesarios.
+El Dockerfile copia los scripts y el paquete de la aplicación, sin incorporar la carpeta de pruebas. Para ejecutarlas dentro del contenedor, se montan temporalmente los archivos necesarios.
 
 Desde **`fase-2`**, en PowerShell:
 
@@ -394,7 +405,7 @@ docker run --rm --entrypoint python `
 
 ### 10.6. Evidencia de ejecución
 
-Se verificaron las siguientes operaciones dentro de Docker:
+Se documentaron las siguientes operaciones dentro de Docker:
 
 | Validación | Resultado |
 |---|---|
@@ -402,13 +413,56 @@ Se verificaron las siguientes operaciones dentro de Docker:
 | Ayuda de `train.py` y `predict.py` | Disponible |
 | Pruebas automatizadas | **13 aprobadas, 0 fallidas** |
 | Entrenamiento desde `fase-1/train.csv` | Correcto |
-| Persistencia de `model.joblib`, `metrics.json`, `metadata.json` | Correcta en carpeta del equipo |
+| Persistencia de `model.joblib`, `metrics.json` y `metadata.json` | Correcta en carpeta del equipo |
 | Predicción con `fase-1/test.csv` | Correcta |
 | CSV `outputs/predicciones_docker.csv` | Generado y consultado correctamente |
 
-La ejecución de entrenamiento en Docker produjo MAE = **21.182,45**, RMSE = **64.975,84** y R² = **0,4496** para regresión lineal; para `DummyRegressor`, MAE = **62.580,40**, RMSE = **87.619,50** y R² = **-0,0009**.
+La ejecución de entrenamiento en Docker produjo MAE = **21.182,45**, RMSE = **64.975,84** y R² = **0,4496** para regresión lineal.
 
-La ejecución original de las pruebas en Docker mostró **13 aprobadas** y una advertencia sobre la caché en un directorio de solo lectura; la opción `-p no:cacheprovider` evita esa advertencia.
+Para `DummyRegressor`, los resultados fueron MAE = **62.580,40**, RMSE = **87.619,50** y R² = **-0,0009**.
+
+La ejecución original de las pruebas en Docker mostró **13 aprobadas** y una advertencia sobre la caché en un directorio de solo lectura. La opción `-p no:cacheprovider` evita esa advertencia.
+
+### 10.7. Verificación integral automatizada
+
+`verify_docker.py` reúne la comprobación de Docker en un solo comando.
+
+Requiere Docker Desktop iniciado y un intérprete de Python en el anfitrión. El script utiliza la biblioteca estándar y no necesita instalar las dependencias del modelo fuera del contenedor para esta comprobación.
+
+Desde la **raíz del repositorio**, en PowerShell:
+
+```powershell
+python fase-2/verify_docker.py
+```
+
+Si la terminal ya está en **`fase-2`**:
+
+```powershell
+python verify_docker.py
+```
+
+El verificador realiza estas operaciones:
+
+1. Construye la imagen `house-prices-fase2:entrega-2` con el Dockerfile de la fase.
+2. Copia los datos de entrenamiento y el ejemplo de predicción a una carpeta temporal del anfitrión, montada en `/data`.
+3. Entrena `docker-v1` con semilla 42 y `docker-v2` con semilla 43.
+4. Comprueba que cada versión conserve `model.joblib`, `metrics.json` y `metadata.json` después de finalizar el contenedor con `--rm`.
+5. Genera predicciones con ambas versiones y comprueba el CSV del ejemplo de una vivienda.
+6. Intenta predecir con un modelo inexistente y comprueba el código de salida distinto de cero y la ausencia de un CSV de resultados.
+
+La comprobación finalizó correctamente el **3 de noviembre de 2026**, en Windows con Docker Desktop y la imagen basada en Python 3.13.
+
+El mensaje final fue:
+
+```text
+Docker: construcción, dos versiones, predicción y persistencia verificadas.
+```
+
+Los artefactos temporales se eliminan al terminar la comprobación. El script no modifica las versiones `entrega-v1` y `entrega-v2` del repositorio.
+
+Para conservar archivos de una ejecución propia, utilizar los montajes de las secciones 10.3 y 10.4.
+
+El verificador no sustituye las pruebas de pytest: ambas comprobaciones se ejecutan por separado.
 
 ## 11. Limitaciones y consideraciones de uso
 
@@ -416,7 +470,9 @@ La ejecución original de las pruebas en Docker mostró **13 aprobadas** y una a
 - Los resultados no reemplazan una valoración inmobiliaria profesional.
 - `R² = 0,4496` muestra margen de mejora; no se busca en esta fase cambiar obligatoriamente el algoritmo ni mejorar la métrica.
 - Para predecir se requiere el esquema de variables y los tipos esperados por el modelo guardado.
-- El archivo `model.joblib` debe cargarse únicamente desde fuentes confiables, dado que los artefactos serializados con `joblib` no deben considerarse seguros cuando provienen de terceros desconocidos.
+- `YrSold` y `MoSold` se interpretan como fecha prevista de venta, de acuerdo con el escenario de predicción.
+- El archivo `model.joblib` debe cargarse únicamente desde fuentes confiables, dado que la deserialización de artefactos de terceros puede ejecutar código.
+- La reproducibilidad requiere conservar los datos, la configuración y las dependencias. Pueden existir pequeñas diferencias numéricas entre sistemas.
 - No se exige una API REST, monitoreo, MLflow, DVC, Docker Compose ni publicar la imagen Docker en la nube en esta fase.
 
 ## 12. Fuentes y referencias
@@ -425,3 +481,14 @@ La ejecución original de las pruebas en Docker mostró **13 aprobadas** y una a
 - **Antecedentes y decisiones técnicas:** [`fase-1/README.md`](../fase-1/README.md) y `fase-1/notebook.ipynb`.
 - **Especificaciones del trabajo:** *Especificación Técnica — Fase 2: Scripts y Docker*, Proyecto Integrador 2026-II, Modelos y Simulación de Sistemas I.
 - **Bibliotecas utilizadas:** `scikit-learn`, `pandas`, `numpy`, `joblib` y `pytest`, en las versiones fijadas en `requirements.txt`.
+- **Configuración de hilos de OpenBLAS:** [Runtime variables](https://www.openmathlib.org/OpenBLAS/docs/runtime_variables/).
+
+## 13. Referencia de integración
+
+La integración de la Fase 2 en `develop`, incluido el verificador de Docker, se identifica mediante el commit [`ee4d6e088b1cf43cc262e62ed2742540ad624781`](https://github.com/isabellasanchezmejia11-11/house-prices-modelos-simulacion/commit/ee4d6e088b1cf43cc262e62ed2742540ad624781), correspondiente al merge del Pull Request #20 el 3 de noviembre de 2026.
+
+Esta referencia identifica el código integrado que documenta esta revisión.
+
+La identificación del código es distinta de `entrega-v1` y `entrega-v2`, que identifican los artefactos del modelo dentro de `models/`.
+
+Los aportes y las revisiones de cada integrante se consultan en los commits y Pull Requests del repositorio.
