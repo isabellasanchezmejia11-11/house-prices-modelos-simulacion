@@ -483,18 +483,12 @@ El verificador no sustituye las pruebas de pytest: ambas comprobaciones se ejecu
 - **Bibliotecas utilizadas:** `scikit-learn`, `pandas`, `numpy`, `joblib` y `pytest`, en las versiones fijadas en `requirements.txt`.
 - **Configuración de hilos de OpenBLAS:** [Runtime variables](https://www.openmathlib.org/OpenBLAS/docs/runtime_variables/).
 
+
 ## 13. Identificación de la entrega
 
-La Fase 2 se integró en `main` mediante el Pull Request #21,
-el 3 de noviembre de 2026.
+La Fase 2 se integró en `main` mediante el Pull Request #21, el 3 de noviembre de 2026. El commit de integración es `025dde3`, identificado con la etiqueta `entrega-2`.
 
-El commit de integración de la entrega es `025dde3`.
-
-Las versiones `entrega-v1` y `entrega-v2` identifican los artefactos
-del modelo y son independientes del identificador del código.
-
-Esta referencia identifica el código integrado que documenta esta revisión.
-
-La identificación del código es distinta de `entrega-v1` y `entrega-v2`, que identifican los artefactos del modelo dentro de `models/`.
+Las versiones `entrega-v1` y `entrega-v2` corresponden a los artefactos del modelo almacenados en `models/` y son independientes de la versión del código.
 
 Los aportes y las revisiones de cada integrante se consultan en los commits y Pull Requests del repositorio.
+
