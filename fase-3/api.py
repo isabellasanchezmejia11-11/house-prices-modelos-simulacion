@@ -1,0 +1,119 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import logging
+import math
+import os
+from pathlib import Path
+import re
+import sys
+
+import numpy as np
+import pandas as pd
+from fastapi import Body, FastAPI, HTTPException
+from pydantic import BaseModel
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "fase-2"))
+from house_prices.data import validate_prediction_data
+from house_prices.prediction import OPTIONAL_INPUT_COLUMNS, _prepare_model_input
+from house_prices.storage import load_model
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class Settings:
+    models_dir: Path = ROOT / "fase-2" / "models"
+    model_version: str = "entrega-v1"
+
+    @classmethod
+    def from_env(cls):
+        return cls(
+            models_dir=Path(os.getenv("MODELS_DIR", str(cls.models_dir))),
+            model_version=os.getenv("MODEL_VERSION", cls.model_version),
+        )
+
+
+class PredictionResponse(BaseModel):
+    prediccion: float
+    version: str
+
+
+def validate_json_record(model, payload: dict) -> pd.DataFrame:
+    schema = [str(c) for c in model.feature_names_in_]
+    missing = sorted(set(schema) - OPTIONAL_INPUT_COLUMNS - payload.keys())
+    if missing:
+        raise ValueError(f"Faltan campos obligatorios: {', '.join(missing)}.")
+    if "SalePrice" in payload:
+        raise ValueError("No envíe la variable objetivo SalePrice para predecir.")
+    unknown = sorted(payload.keys() - set(schema))
+    if unknown:
+        raise ValueError(f"Campos desconocidos: {', '.join(unknown)}.")
+    numeric, categorical = set(), set()
+    for name, _, columns in model.named_steps["preprocessing"].transformers_:
+        if name == "numeric":
+            numeric.update(str(c) for c in columns)
+        elif name == "categorical":
+            categorical.update(str(c) for c in columns)
+    for name, value in payload.items():
+        if value is None:
+            continue
+        if name in numeric and (
+            isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
+            raise ValueError(f"El campo '{name}' debe ser un número finito o null.")
+        if name in categorical and not isinstance(value, str):
+            raise ValueError(f"El campo '{name}' debe ser texto o null.")
+        if name in OPTIONAL_INPUT_COLUMNS:
+            if name == "Id":
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                    raise ValueError("El campo 'Id' debe ser un número finito o null.")
+            elif not isinstance(value, str):
+                raise ValueError(f"El campo '{name}' debe ser texto o null.")
+    frame = pd.DataFrame([{k: np.nan if v is None else v for k, v in payload.items()}])
+    validate_prediction_data(frame)
+    return _prepare_model_input(model, frame)
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    config = settings or Settings.from_env()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", config.model_version):
+        raise ValueError("MODEL_VERSION debe ser un identificador de versión válido.")
+    app = FastAPI(title="House Prices · Fase 3", version="1.0.0",
+                  description="Consulta del estado y predicción de precios de viviendas.")
+    app.state.settings = config
+
+    @app.get("/health")
+    def health():
+        return {"estado": "ok"}
+
+    @app.post("/predict", response_model=PredictionResponse)
+    def predict(payload: dict = Body(...)):
+        try:
+            model = load_model(config.models_dir / config.model_version)
+        except (OSError, ValueError, TypeError, AttributeError) as error:
+            logger.warning("No se pudo cargar el modelo: %s", error)
+            raise HTTPException(503, detail=(
+                f"Modelo '{config.model_version}' no disponible o incompatible. "
+                "Revise MODELS_DIR y MODEL_VERSION y seleccione una versión guardada."
+            )) from error
+        try:
+            frame = validate_json_record(model, payload)
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from error
+        try:
+            result = float(model.predict(frame)[0])
+            if not math.isfinite(result):
+                raise ValueError("Predicción no finita.")
+        except Exception as error:
+            logger.exception("Error al ejecutar el pipeline")
+            raise HTTPException(503, detail="No se pudo ejecutar el modelo configurado.") from error
+        return {"prediccion": result, "version": config.model_version}
+
+
+    return app
+
+
+app = create_app()
