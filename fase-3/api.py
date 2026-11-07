@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+from datetime import datetime, timezone
 import math
 import os
 from pathlib import Path
@@ -15,7 +16,8 @@ from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "fase-2"))
-from house_prices.data import validate_prediction_data
+from house_prices.data import read_training_data, validate_prediction_data
+from house_prices.model import train_model
 from house_prices.prediction import OPTIONAL_INPUT_COLUMNS, _prepare_model_input
 from house_prices.storage import load_model
 
@@ -38,6 +40,14 @@ class Settings:
 class PredictionResponse(BaseModel):
     prediccion: float
     version: str
+
+
+class TrainingResponse(BaseModel):
+    mensaje: str
+    version: str
+    modelo: str
+    metricas: str
+    metadatos: str
 
 
 def validate_json_record(model, payload: dict) -> pd.DataFrame:
@@ -112,6 +122,48 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(503, detail="No se pudo ejecutar el modelo configurado.") from error
         return {"prediccion": result, "version": config.model_version}
 
+    
+    @app.post("/train", response_model=TrainingResponse, status_code=201)
+    def train():
+        data_path = ROOT / "fase-1" / "train.csv"
+
+        version = "entrenamiento-" + datetime.now(
+            timezone.utc
+        ).strftime("%Y%m%dT%H%M%S%fZ")
+
+        try:
+            data = read_training_data(data_path, "SalePrice")
+
+            artifacts = train_model(
+                data,
+                config.models_dir,
+                version=version,
+                target_column="SalePrice",
+                source_data=str(data_path),
+                test_size=0.2,
+                random_state=42,
+            )
+
+        except (ValueError, TypeError) as error:
+            raise HTTPException(
+                status_code=422,
+                detail=str(error),
+            ) from error
+
+        except OSError as error:
+            logger.exception("Error al acceder a los datos o modelos")
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudo acceder a los datos o guardar el modelo.",
+            ) from error
+
+        return {
+            "mensaje": "Modelo entrenado correctamente",
+            "version": version,
+            "modelo": str(artifacts.model_path),
+            "metricas": str(artifacts.metrics_path),
+            "metadatos": str(artifacts.metadata_path),
+        }
 
     return app
 
