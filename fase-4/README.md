@@ -1,97 +1,66 @@
 # Fase 4 · Monitoreo de la API
 
-Esta fase incorpora el registro de solicitudes de predicción y el cálculo de métricas operativas para la API REST House Prices desarrollada en la fase 3.
+La API registra cada solicitud a `/predict`, incluidas las que se rechazan por validación. `registro.py` agrega una fila por intento con la fecha y hora en UTC, el código HTTP, la versión utilizada y la predicción. Si la solicitud se rechaza antes de usar el modelo, los dos últimos campos quedan vacíos. El encabezado se escribe al crear el CSV.
 
-## 1. Registro de solicitudes
+## Iniciar la API y consultar el historial
 
-Se implementó `fase-4/registro.py` para almacenar automáticamente las solicitudes realizadas al endpoint `POST /predict`, incluidas aquellas rechazadas por validación.
+Los comandos se ejecutan en PowerShell desde la raíz del repositorio. Para la ejecución local, instala primero las dependencias siguiendo el [README de fase 3](../fase-3/README.md).
 
-El archivo `fase-3/api.py` incorpora un middleware que registra cada solicitud con los siguientes campos:
+```powershell
+$env:MODEL_VERSION = "entrega-v2"
+python -m uvicorn api:app --app-dir fase-3 --host 0.0.0.0 --port 8000
+```
 
-- `fecha_hora`: fecha y hora de la solicitud en UTC.
-- `estado_http`: código HTTP de respuesta.
-- `version`: versión del modelo utilizada, si corresponde.
-- `prediccion`: resultado generado, si corresponde.
-
-Los registros se almacenan en `fase-4/registros/solicitudes.csv` utilizando el modo de escritura `append`, que conserva la información anterior.
-
-## 2. Métricas de operación
-
-El script `fase-4/monitoreo.py` lee el registro CSV y calcula:
-
-- Total de solicitudes registradas.
-- Total de solicitudes fallidas, considerando los códigos HTTP entre 400 y 599.
-- Porcentaje de solicitudes fallidas respecto al total.
-
-Para ejecutarlo desde la raíz del repositorio:
+El historial se guarda en `fase-4/registros/solicitudes.csv` y se conserva entre ejecuciones. Si se configura `REGISTRO_PATH` antes de arrancar la API, se utiliza la ruta indicada. El script de monitoreo cuenta las filas de datos y considera fallidas las respuestas con códigos HTTP del 400 al 599.
 
 ```powershell
 python fase-4/monitoreo.py
+python fase-4/monitoreo.py --registro fase-4/registros/muestra_reporte.csv
 ```
 
-También es posible especificar otro archivo:
+Con un archivo vacío, el total es 0 y el porcentaje se muestra como `sin solicitudes`.
 
-```powershell
-python fase-4/monitoreo.py --registro ruta/al/archivo.csv
-```
+## Docker y persistencia
 
-Cuando no existen solicitudes, el script presenta total 0 y el mensaje `sin solicitudes`.
-
-## 3. Pruebas automatizadas
-
-Las pruebas se encuentran en `fase-4/tests/test_monitoreo.py`.
-
-Desde la raíz del repositorio:
-
-```powershell
-python -m pip install -r fase-3/requirements-dev.txt
-python -m pytest fase-4/tests/test_monitoreo.py -v
-```
-
-Las cuatro pruebas verifican el registro de predicciones válidas, el registro de solicitudes rechazadas, el cálculo de indicadores y el comportamiento ante un archivo vacío.
-
-Resultado obtenido: **4 pruebas aprobadas**.
-
-Para comprobar las fases 3 y 4 conjuntamente:
-
-```powershell
-python -m pytest fase-3/tests fase-4/tests -v
-```
-
-Resultado obtenido: **7 pruebas aprobadas**.
-
-## 4. Ejecución mediante Docker
-
-Construir la imagen desde la raíz del repositorio:
+Construye la imagen desde la raíz del repositorio. La API escucha en el puerto 8000, y el contenedor usa montajes para los datos de entrenamiento, los modelos y el historial.
 
 ```powershell
 docker build -f fase-3/Dockerfile -t house-prices-api-fase4 .
+docker run --rm --name house-prices-api-fase4 -p 8000:8000 --mount "type=bind,source=$((Resolve-Path 'fase-1').Path),target=/app/fase-1,readonly" --mount "type=bind,source=$((Resolve-Path 'fase-2/models').Path),target=/app/fase-2/models" --mount "type=bind,source=$((Resolve-Path 'fase-4/registros').Path),target=/app/fase-4/registros" -e MODEL_VERSION=entrega-v2 house-prices-api-fase4
 ```
 
-Ejecutar el contenedor en PowerShell:
+El montaje de `fase-4/registros` conserva el CSV al detener el contenedor. Para repetir el ensayo sobre un archivo vacío, agrega `-e REGISTRO_PATH=/app/fase-4/registros/solicitudes-ensayo.csv` antes del nombre de la imagen y usa un nombre que aún no exista en esa carpeta. En ejecución local puedes configurar `$env:REGISTRO_PATH = Join-Path (Get-Location).Path "fase-4/registros/solicitudes-ensayo.csv"` antes de iniciar Uvicorn. Los registros de un ensayo posterior se consultan con `python fase-4/monitoreo.py --registro fase-4/registros/solicitudes-ensayo.csv`.
+
+## Reporte
+
+Se inició la API con `entrega-v2` y un CSV vacío. Las tres solicitudes se enviaron a `POST /predict` a partir de [example_request.json](../fase-3/data/example_request.json). Se reinició la API tras la primera predicción para comprobar que las siguientes filas se agregaran al mismo archivo.
+
+| Solicitud | Datos enviados | HTTP | Versión | Predicción |
+| --- | --- | --- | --- | --- |
+| 1 | JSON de ejemplo, con `GrLivArea` de 896 | 200 | `entrega-v2` | 113.650,18 |
+| 2 | Mismo JSON, con `GrLivArea` de 996 | 200 | `entrega-v2` | 116.877,85 |
+| 3 | JSON de la segunda solicitud sin `GrLivArea` | 422 | | |
+
+Al ejecutar `monitoreo.py` sobre [muestra_reporte.csv](registros/muestra_reporte.csv), se obtuvieron **3 solicitudes y 33,3 % de fallos**. La única solicitud fallida fue la que omitió `GrLivArea` de forma intencional para comprobar la validación. La tasa mide los fallos de las solicitudes de este ensayo.
+
+### Versiones y retorno a la anterior
+
+- `entrega-v2` fue la versión activa del ensayo. Está en [fase-2/models/entrega-v2](../fase-2/models/entrega-v2/).
+- `entrega-v1` es la versión anterior y la predeterminada cuando se inicia sin configurar `MODEL_VERSION`. Está en [fase-2/models/entrega-v1](../fase-2/models/entrega-v1/).
+
+Para volver a `entrega-v1`, detén la API, ejecuta `$env:MODEL_VERSION = "entrega-v1"` y vuelve a iniciarla con el mismo comando de Uvicorn. En Docker, detén el contenedor y vuelve a crearlo con los mismos montajes y `-e MODEL_VERSION=entrega-v1`. Se verificó por separado que la API devolviera `"version": "entrega-v1"` al aplicar el cambio.
+
+### Política de reentrenamiento
+
+Cuando el equipo reúna 100 nuevos registros de viviendas con su precio de venta real, la persona responsable del modelo revisará el desempeño y ejecutará `POST /train` con los datos preparados para generar una versión candidata. El equipo calculará el MAE de la versión activa y de la candidata sobre las mismas viviendas reservadas para evaluación, excluidas del entrenamiento, y activará la candidata mediante `MODEL_VERSION` solo si reduce el MAE.
+
+## Pruebas
+
+Desde la raíz, instala las dependencias de desarrollo y ejecuta pytest.
 
 ```powershell
-docker run --rm --name house-prices-api-fase4 -p 8000:8000 --mount "type=bind,source=$((Resolve-Path 'fase-1').Path),target=/app/fase-1,readonly" --mount "type=bind,source=$((Resolve-Path 'fase-2/models').Path),target=/app/fase-2/models" --mount "type=bind,source=$((Resolve-Path 'fase-4/registros').Path),target=/app/fase-4/registros" house-prices-api-fase4
+python -m pip install -r fase-3/requirements-dev.txt
+python -m pytest -q
 ```
 
-El montaje de `fase-4/registros` permite conservar el historial de solicitudes aunque se detenga el contenedor.
-
-La documentación interactiva de la API está disponible en `http://localhost:8000/docs`.
-
-## 5. Resultados de comprobación
-
-Durante las pruebas locales y en Docker se registraron cinco solicitudes: dos exitosas con HTTP 200 y tres rechazadas con HTTP 422.
-
-Los indicadores obtenidos fueron:
-
-- Total de solicitudes: 5.
-- Solicitudes fallidas: 3.
-- Porcentaje de fallos: 60,0 %.
-
-Las solicitudes rechazadas se realizaron intencionalmente para comprobar la validación de entradas. Esta tasa representa el resultado de las pruebas y no mide la calidad predictiva del modelo.
-
-## 6. Estado de implementación
-
-Se completaron y comprobaron los puntos 1 y 2 de la fase 4: registro de solicitudes y cálculo de métricas operativas.
-
-Los puntos 3 (conservación de versiones y política de reentrenamiento) y 4 (reporte final) quedan pendientes de integración por el equipo.
+Resultado de la revisión local con Python 3.12: **20 pruebas aprobadas**, incluidas las 7 de las fases 3 y 4. Las pruebas de la API escriben en archivos temporales para que el historial de operación y la muestra del reporte se puedan consultar después de cada ejecución.

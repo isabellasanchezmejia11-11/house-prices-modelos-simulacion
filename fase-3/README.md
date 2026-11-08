@@ -295,4 +295,4 @@ La implementación incluye validación de entradas, manejo de errores, reutiliza
 
 Se verificaron las tres operaciones HTTP y se aprobaron las tres pruebas automatizadas exigidas.
 
-La validación final de reproducibilidad desde una copia limpia del repositorio queda pendiente antes de integrar los cambios en la rama `develop`.
+Desde la raíz, `python -m pytest -q` ejecuta las pruebas de las fases 2, 3 y 4. Las pruebas de la API usan un registro temporal para preservar la evidencia de monitoreo.

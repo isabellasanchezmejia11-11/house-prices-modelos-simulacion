@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import csv
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-REGISTRO_PATH = (
+REGISTRO_PREDETERMINADO = (
     Path(__file__).resolve().parent
     / "registros"
     / "solicitudes.csv"
 )
+
+REGISTRO_PATH = Path(os.getenv("REGISTRO_PATH", str(REGISTRO_PREDETERMINADO)))
 
 CAMPOS = [
     "fecha_hora",
