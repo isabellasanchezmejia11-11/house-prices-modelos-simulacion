@@ -5,11 +5,7 @@ import argparse
 import csv
 from pathlib import Path
 
-REGISTRO_PREDETERMINADO = (
-    Path(__file__).resolve().parent
-    / "registros"
-    / "solicitudes.csv"
-)
+from registro import REGISTRO_PATH
 
 
 def calcular_metricas(ruta: Path) -> tuple[int, int, float | None]:
@@ -53,7 +49,7 @@ def main():
     parser.add_argument(
         "--registro",
         type=Path,
-        default=REGISTRO_PREDETERMINADO,
+        default=REGISTRO_PATH,
         help="Ruta del archivo CSV de solicitudes.",
     )
 
