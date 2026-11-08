@@ -15,6 +15,8 @@ RUN python -m pip install --no-cache-dir -r fase-3/requirements.txt
 COPY fase-2/house_prices/ fase-2/house_prices/
 COPY fase-2/train.py fase-2/predict.py fase-2/
 COPY fase-3/api.py fase-3/api.py
+COPY fase-4/registro.py fase-4/registro.py
+
 
 EXPOSE 8000
 
