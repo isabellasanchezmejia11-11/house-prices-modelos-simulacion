@@ -492,3 +492,20 @@ Las versiones `entrega-v1` y `entrega-v2` corresponden a los artefactos del mode
 
 Los aportes y las revisiones de cada integrante se consultan en los commits y Pull Requests del repositorio.
 
+
+## 14. Relación verificada entre modelos y código
+
+El archivo [`models/trazabilidad_entrega.json`](models/trazabilidad_entrega.json) relaciona `entrega-v1` y `entrega-v2` con el commit completo `fa0042509b4fd62c7215435f8303eb9f4ecea1ab`, donde están disponibles sus artefactos y el código cuya huella SHA-256 coincide con los metadatos. Registra las rutas y huellas de modelo, métricas y metadatos, junto con entorno, semilla y huella de datos.
+
+Esta relación se verificó retrospectivamente comparando los archivos de ese commit y recalculando la huella del código con el procedimiento de `house_prices/model.py`. No certifica cuál era el commit activo durante el entrenamiento original. Se conservan los modelos, métricas y metadatos entregados sin modificaciones. El commit de integración `025dde3` y el commit revisado `e8c9980a` tienen funciones distintas de la referencia de código aquí verificada.
+
+Para futuras versiones, registrar el commit de código y si había cambios locales al entrenar, junto con los metadatos existentes. Si no hay historial Git en el entorno, indicar que el commit no está disponible y conservar la huella del código. No atribuir automáticamente a un modelo anterior el commit actual.
+
+Después de modificar la aplicación, ejecutar desde la raíz:
+
+```powershell
+python -m pip install -r fase-3/requirements-dev.txt
+python -m pytest -q
+```
+
+La suite incluye las pruebas de fase 2 y la [predicción conocida de la API](../fase-3/data/prediction_reference.json). Si cambian datos, semilla, partición o entorno, registrar la diferencia antes de comparar métricas.

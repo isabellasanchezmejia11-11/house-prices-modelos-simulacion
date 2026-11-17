@@ -118,6 +118,8 @@ Los campos numéricos deben enviarse como números y las variables categóricas 
 
 Una variable presente con valor `null` no equivale a una variable obligatoria ausente.
 
+Consultar el [contrato completo y diccionario de los 77 campos](docs/contrato_predict.md): incluye tipos, unidades, nulos y categorías nuevas. En las columnas de ausencia estructural, incluido `GarageType`, `null` significa que la característica no existe; las versiones entregadas no tienen un marcador independiente para un dato desconocido en esas columnas.
+
 Los errores de validación devuelven HTTP 422 con un mensaje que identifica el problema.
 
 Cuando el modelo configurado no está disponible o resulta incompatible, `/predict` devuelve HTTP 503 con un mensaje comprensible.
@@ -296,3 +298,20 @@ La implementación incluye validación de entradas, manejo de errores, reutiliza
 Se verificaron las tres operaciones HTTP y se aprobaron las tres pruebas automatizadas exigidas.
 
 Desde la raíz, `python -m pytest -q` ejecuta las pruebas de las fases 2, 3 y 4. Las pruebas de la API usan un registro temporal para preservar la evidencia de monitoreo.
+
+## 10. Comprobación de predicciones conocidas
+
+`data/prediction_reference.json` conserva la entrada identificada por SHA-256, el commit de referencia y la predicción documentada `113650.17525962926` para `entrega-v1` y `entrega-v2`. La prueba `test_predict_matches_delivery_reference` usa las dos versiones explícitamente, con independencia de `MODEL_VERSION` y `MODELS_DIR`.
+
+Desde la raíz, con las dependencias de desarrollo instaladas:
+
+```powershell
+python -m pytest fase-3/tests/test_api.py -k delivery_reference -v
+python -m pytest -q
+```
+
+La comparación usa tolerancia relativa `1e-8` y absoluta `1e-4` USD (aproximadamente 0,00114 USD en esta entrada), para admitir pequeñas diferencias numéricas entre entornos y detectar alteraciones no previstas. La referencia es fija: no se calcula de nuevo a partir del modelo durante la prueba. Una discrepancia exige investigar entrada, versión, código y entorno antes de actualizar el valor esperado; una predicción distinta no demuestra una mejora de métricas.
+
+La suite de API conserva las tres pruebas originales y añade dos casos de referencia. Las solicitudes de prueba se registran en una carpeta temporal y no alteran la evidencia de fase 4.
+
+La relación de los modelos con el código y el entorno está en la [trazabilidad de entrega](../fase-2/models/trazabilidad_entrega.json).
