@@ -1,0 +1,12 @@
+{
+  "description": "Predicción documentada de la entrada de ejemplo; referencia fija de regresión.",
+  "reference_commit": "e8c9980a9a9b26520d198923f537617d775982ad",
+  "input_file": "fase-3/data/example_request.json",
+  "input_sha256": "49a188eb0c8df823628a71c3074e57a4817870d78132af9996d11a2bb8314194",
+  "predictions": {
+    "entrega-v1": 113650.17525962926,
+    "entrega-v2": 113650.17525962926
+  },
+  "relative_tolerance": 1e-08,
+  "absolute_tolerance": 0.0001
+}

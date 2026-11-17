@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 import sys
@@ -64,3 +65,28 @@ def test_predict_missing_required_field(client):
 
     assert response.status_code in (400, 422)
     assert required[0] in str(response.json())
+
+
+@pytest.mark.parametrize("version", ["entrega-v1", "entrega-v2"])
+def test_predict_matches_delivery_reference(client, version):
+    reference = json.loads(
+        (ROOT / "fase-3/data/prediction_reference.json").read_text(encoding="utf-8")
+    )
+    input_bytes = (ROOT / reference["input_file"]).read_bytes().replace(bytes([13, 10]), bytes([10]))
+    assert hashlib.sha256(input_bytes).hexdigest() == reference["input_sha256"], (
+        "La entrada conocida cambió; revisar la referencia antes de actualizarla."
+    )
+    app = api_module.create_app(api_module.Settings(
+        models_dir=ROOT / "fase-2/models", model_version=version,
+    ))
+    with TestClient(app) as reference_client:
+        response = reference_client.post("/predict", json=json.loads(input_bytes))
+
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["version"] == version
+    assert result["prediccion"] == pytest.approx(
+        reference["predictions"][version],
+        rel=reference["relative_tolerance"],
+        abs=reference["absolute_tolerance"],
+    )

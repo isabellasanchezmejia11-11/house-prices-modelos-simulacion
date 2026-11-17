@@ -1,0 +1,95 @@
+{
+  "scope": "Relación retrospectiva verificada de artefactos y código. No certifica el commit activo al ejecutar el entrenamiento original.",
+  "versions": [
+    {
+      "version": "entrega-v1",
+      "verified_code_commit": "fa0042509b4fd62c7215435f8303eb9f4ecea1ab",
+      "code_reference": {
+        "method": "sha256",
+        "value": "249718a52a0415c793f48a3b2c2d24af5dc9816765513c245f57d51237bc9265",
+        "files": [
+          "house_prices/__init__.py",
+          "house_prices/data.py",
+          "house_prices/model.py",
+          "house_prices/pipeline.py",
+          "house_prices/prediction.py",
+          "house_prices/preprocessing.py",
+          "house_prices/storage.py",
+          "predict.py",
+          "train.py"
+        ]
+      },
+      "artifacts": {
+        "model.joblib": {
+          "path": "fase-2/models/entrega-v1/model.joblib",
+          "sha256": "45467a251a9507a4048451fb21c19176b40616b009eae44f881675e145da1c3f"
+        },
+        "metrics.json": {
+          "path": "fase-2/models/entrega-v1/metrics.json",
+          "sha256": "a6120ee2edbeae895b92b9186dafffa726cb46bf26f20c86d8a10b2d0b2f71c2"
+        },
+        "metadata.json": {
+          "path": "fase-2/models/entrega-v1/metadata.json",
+          "sha256": "101f423703ab8a049c717c5f3513dc58b4d66aba21aa93baacf71ad7177a83bd"
+        }
+      },
+      "environment": {
+        "python_version": "3.13.14",
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.0",
+          "scipy": "1.18.1",
+          "joblib": "1.6.0"
+        }
+      },
+      "seed": 42,
+      "data_sha256": "a9d6a184603276db15b6b0d35afd9403ad5ec81cbc37573b8b80bb7ace1d6c36"
+    },
+    {
+      "version": "entrega-v2",
+      "verified_code_commit": "fa0042509b4fd62c7215435f8303eb9f4ecea1ab",
+      "code_reference": {
+        "method": "sha256",
+        "value": "249718a52a0415c793f48a3b2c2d24af5dc9816765513c245f57d51237bc9265",
+        "files": [
+          "house_prices/__init__.py",
+          "house_prices/data.py",
+          "house_prices/model.py",
+          "house_prices/pipeline.py",
+          "house_prices/prediction.py",
+          "house_prices/preprocessing.py",
+          "house_prices/storage.py",
+          "predict.py",
+          "train.py"
+        ]
+      },
+      "artifacts": {
+        "model.joblib": {
+          "path": "fase-2/models/entrega-v2/model.joblib",
+          "sha256": "45467a251a9507a4048451fb21c19176b40616b009eae44f881675e145da1c3f"
+        },
+        "metrics.json": {
+          "path": "fase-2/models/entrega-v2/metrics.json",
+          "sha256": "a6120ee2edbeae895b92b9186dafffa726cb46bf26f20c86d8a10b2d0b2f71c2"
+        },
+        "metadata.json": {
+          "path": "fase-2/models/entrega-v2/metadata.json",
+          "sha256": "6bc0516ff4181b82aa345855bc7f6c4efc4b0cde06acd1ca4a03a18eb44e5d19"
+        }
+      },
+      "environment": {
+        "python_version": "3.13.14",
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.0",
+          "scipy": "1.18.1",
+          "joblib": "1.6.0"
+        }
+      },
+      "seed": 42,
+      "data_sha256": "a9d6a184603276db15b6b0d35afd9403ad5ec81cbc37573b8b80bb7ace1d6c36"
+    }
+  ]
+}
